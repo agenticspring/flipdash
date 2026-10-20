@@ -1,0 +1,20 @@
+# dependencies
+node_modules/
+
+# logs & OS noise
+*.log
+.DS_Store
+Thumbs.db
+
+# secrets — never commit
+.env
+.env.*
+*.pem
+*.key
+id_rsa*
+credentials*
+
+# editor noise
+.vscode/
+.idea/
+*.swp

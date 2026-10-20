@@ -1,0 +1,46 @@
+▶ game.js pure logic
+  ✔ initial state: title, ship resting on floor (2.152192ms)
+  ✔ startGame resets a finished run (0.302635ms)
+  ✔ flipGravity toggles only while playing (0.205098ms)
+  ✔ ship snaps to ceiling after flip and rests there (0.92581ms)
+  ✔ ship snaps back to floor on second flip (0.818199ms)
+  ✔ floor obstacle kills the ship on the floor (0.322665ms)
+  ✔ floor obstacle is harmless when ship rides the ceiling (0.553901ms)
+  ✔ ceiling obstacle kills the ship on the ceiling (0.416776ms)
+  ✔ star pickup awards stars and points (0.437717ms)
+  ✔ score = distance points + star bonus (6.673649ms)
+  ✔ difficulty ramps: speed rises, spawn density rises (6.713159ms)
+  ✔ pause freezes the world, resume continues (0.615394ms)
+  ✔ dt is clamped against frame spikes (0.09967ms)
+  ✔ spawnObstacle places spikes on the correct lane (0.41301ms)
+  ✔ dead game cannot be flipped or double-killed (1.062415ms)
+✔ game.js pure logic (25.15108ms)
+▶ main.js headless playtest (production code)
+  ✔ boots to title screen with no console errors (0.258488ms)
+  ✔ start button begins the run (0.407632ms)
+  ✔ plays 3 seconds: world scrolls, obstacles spawn, score grows (12.608639ms)
+  ✔ touch path: pointerdown flips gravity (0.577247ms)
+  ✔ keyboard path: Space flips gravity back (0.308293ms)
+  ✔ keyboard P pauses and resumes; world freezes while paused (2.768716ms)
+  ✔ pause button + visibilitychange auto-pause (0.56616ms)
+  ✔ death path: forced collision -> game over overlay, best persisted (10.618342ms)
+  ✔ restart path: play again resets the run (1.785471ms)
+  ✔ mute toggle persists to localStorage (0.251899ms)
+  ✔ Sfx degrades silently without AudioContext (0.990908ms)
+  ✔ zero console errors across the whole playtest (0.134292ms)
+✔ main.js headless playtest (production code) (36.871456ms)
+▶ index.html static checks
+  ✔ has viewport meta for mobile (0.132239ms)
+  ✔ canvas uses touch-action:none and pointer events (0.064487ms)
+  ✔ portrait letterbox with preserved aspect ratio (no distortion) (0.0531ms)
+  ✔ tap targets are thumb-sized (>=44px) (0.109174ms)
+  ✔ zero external dependencies in markup (0.23969ms)
+✔ index.html static checks (0.774723ms)
+ℹ tests 32
+ℹ suites 3
+ℹ pass 32
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 218.264447

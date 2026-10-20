@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#070a1c">
+<meta name="description" content="flipdash — a one-tap gravity-flip runner. Tap to flip gravity, dodge spikes, grab stars. Zero dependencies.">
+<title>flipdash — one-tap gravity-flip runner</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0;
+    background: #02040a; color: #e5e7eb;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow-x: hidden;
+  }
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex; align-items: center; justify-content: center;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right)
+             env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  /* Portrait letterbox: fixed 2:3 aspect, never distorted */
+  #stage {
+    position: relative;
+    width: min(100vw, calc(100dvh * 0.6667));
+    max-width: 480px;
+    aspect-ratio: 2 / 3;
+    background: #05070f;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 0 60px rgba(34, 211, 238, 0.12);
+  }
+  #game {
+    width: 100%; height: 100%; display: block;
+    touch-action: none;            /* pointer events, no scroll/zoom gestures */
+    user-select: none; -webkit-user-select: none;
+  }
+  .hidden { display: none !important; }
+
+  /* HUD — readable at 390px */
+  #hud {
+    position: absolute; top: 0; left: 0; right: 0;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 14px;
+    font-size: 15px; font-weight: 700; letter-spacing: 0.5px;
+    pointer-events: none;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.8);
+  }
+  #hud .score { font-size: 22px; color: #fff; }
+  #hud .stars { color: #facc15; }
+  #hud .best { color: #94a3b8; font-size: 13px; }
+
+  /* Thumb-friendly round buttons, >= 56px */
+  .fab {
+    position: absolute; z-index: 5;
+    width: 56px; height: 56px; border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.25);
+    background: rgba(10, 14, 35, 0.72);
+    color: #fff; font-size: 22px; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; padding: 0;
+  }
+  .fab:active { transform: scale(0.93); }
+  #btnPause { right: 14px; bottom: 16px; }
+  #btnMute  { left: 14px; bottom: 16px; }
+
+  /* Overlays */
+  .overlay {
+    position: absolute; inset: 0; z-index: 10;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 14px; padding: 28px;
+    text-align: center;
+    background: rgba(2, 4, 12, 0.78);
+    backdrop-filter: blur(3px);
+  }
+  .overlay h1 {
+    margin: 0; font-size: 44px; font-weight: 900; letter-spacing: 2px;
+    background: linear-gradient(180deg, #22d3ee, #f472b6);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .overlay h2 { margin: 0; font-size: 30px; letter-spacing: 1px; }
+  .overlay p { margin: 0; color: #cbd5e1; font-size: 15px; line-height: 1.55; max-width: 320px; }
+  .overlay .keys {
+    display: inline-block; margin-top: 6px;
+    font-size: 13px; color: #94a3b8;
+  }
+  .bigbtn {
+    min-width: 200px; min-height: 56px;
+    padding: 14px 34px; font-size: 19px; font-weight: 800; letter-spacing: 1px;
+    color: #04121a; background: linear-gradient(180deg, #22d3ee, #0ea5e9);
+    border: none; border-radius: 14px; cursor: pointer;
+    box-shadow: 0 6px 24px rgba(34, 211, 238, 0.35);
+  }
+  .bigbtn:active { transform: scale(0.96); }
+  .ghostbtn {
+    min-height: 48px; padding: 10px 26px; font-size: 15px; font-weight: 700;
+    color: #e5e7eb; background: transparent;
+    border: 1px solid rgba(255,255,255,0.3); border-radius: 12px; cursor: pointer;
+  }
+  .final-score { font-size: 52px; font-weight: 900; color: #fff; margin: 0; }
+  #newBest {
+    color: #facc15; font-weight: 800; letter-spacing: 1px;
+    animation: pulse 1s ease-in-out infinite;
+  }
+  @keyframes pulse { 50% { opacity: 0.55; } }
+  .btnrow { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  #btnMute2 {
+    position: static; width: 48px; height: 48px; font-size: 20px;
+  }
+  #btnMute3 {
+    position: static; width: 48px; height: 48px; font-size: 20px;
+  }
+</style>
+</head>
+<body>
+  <div id="stage">
+    <canvas id="game" width="480" height="720" aria-label="flipdash play area"></canvas>
+
+    <div id="hud" class="hidden" aria-live="polite">
+      <div><span id="hudScore" class="score">0</span><div class="best">SCORE</div></div>
+      <div class="stars">★ <span id="hudStars">0</span></div>
+      <div style="text-align:right"><span id="hudBest">0</span><div class="best">BEST</div></div>
+    </div>
+
+    <button id="btnPause" class="fab hidden" aria-label="Pause">⏸</button>
+    <button id="btnMute" class="fab hidden" aria-label="Mute sounds">🔊</button>
+
+    <div id="ovTitle" class="overlay">
+      <h1>FLIPDASH</h1>
+      <p>One tap flips gravity. Dodge the red spikes on floor <em>and</em> ceiling, grab stars, survive as long as you can. One hit — game over.</p>
+      <p class="keys">TAP · CLICK · SPACE / ↑ to flip &nbsp;·&nbsp; P to pause</p>
+      <p>BEST&nbsp; <b id="titleBest">0</b></p>
+      <div class="btnrow">
+        <button id="btnStart" class="bigbtn">▶&nbsp; START</button>
+        <button id="btnMute2" class="fab" aria-label="Mute sounds">🔊</button>
+      </div>
+    </div>
+
+    <div id="ovPause" class="overlay hidden">
+      <h2>PAUSED</h2>
+      <div class="btnrow">
+        <button id="btnResume" class="bigbtn">▶&nbsp; RESUME</button>
+        <button id="btnRestart2" class="ghostbtn">↻ RESTART</button>
+      </div>
+    </div>
+
+    <div id="ovOver" class="overlay hidden">
+      <h2>GAME OVER</h2>
+      <p id="newBest" class="hidden">★ NEW BEST ★</p>
+      <p class="final-score" id="finalScore">0</p>
+      <p>BEST&nbsp; <b id="finalBest">0</b></p>
+      <div class="btnrow">
+        <button id="btnRestart" class="bigbtn">↻&nbsp; PLAY AGAIN</button>
+        <button id="btnMute3" class="fab" aria-label="Mute sounds">🔊</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
